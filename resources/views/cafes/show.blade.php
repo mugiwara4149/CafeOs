@@ -230,4 +230,48 @@
             });
         });
     </script>
+
+    @php
+    $activeTableId = request('table') ?? old('floor_element_id');
+    $activeTable = $activeTableId
+        ? $cafe->rooms->flatMap->tables->firstWhere('id', (int) $activeTableId)
+        : null;
+@endphp
+
+<!-- Sticky Bottom Table Service & Call Waiter Bar -->
+<div class="table-service-dock">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <span class="small text-uppercase fw-bold" style="color: var(--brand-accent); letter-spacing: 0.08em;">
+                {{ $activeTable ? '📍 ' . $activeTable->label . ' (' . $activeTable->room->name . ')' : 'SELECT YOUR TABLE TO CALL SERVICE' }}
+            </span>
+        </div>
+
+        <form method="POST" action="{{ route('cafes.call-waiter', $cafe->slug) }}" class="d-flex align-items-center gap-2 flex-wrap">
+            @csrf
+            <select name="floor_element_id" class="form-select form-select-sm status-select" style="width: auto;" required>
+                <option value="">Choose Table...</option>
+                @foreach ($cafe->rooms as $room)
+                    @foreach ($room->tables as $table)
+                        <option value="{{ $table->id }}" @selected($activeTable?->id === $table->id)>
+                            {{ $table->label }} ({{ $room->name }})
+                        </option>
+                    @endforeach
+                @endforeach
+            </select>
+
+            <button type="submit" name="request_type" value="waiter" class="hero-btn primary-btn py-2 px-3"
+                    style="background: var(--brand-accent); border-color: var(--brand-accent); color: #062240 !important;">
+                🔔 Call Waiter
+            </button>
+            <button type="submit" name="request_type" value="water" class="hero-btn secondary-btn py-2 px-3">
+                💧 Water
+            </button>
+            <button type="submit" name="request_type" value="bill" class="hero-btn secondary-btn py-2 px-3">
+                🧾 Request Bill
+            </button>
+        </form>
+    </div>
+</div>
+
 @endsection

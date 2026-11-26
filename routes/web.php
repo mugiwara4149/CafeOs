@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\BookingController;
@@ -8,54 +7,49 @@ use App\Http\Controllers\Owner\BookingController as OwnerBookingController;
 use App\Http\Controllers\Owner\CafeController;
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\FloorPlanController;
-use App\Http\Controllers\Owner\RoomController;
-use App\Http\Controllers\PublicCafeController;
 use App\Http\Controllers\Owner\MenuItemController;
+use App\Http\Controllers\Owner\RoomController;
 use App\Http\Controllers\Owner\StaffController;
+use App\Http\Controllers\OwnerStaffRecordController;
+use App\Http\Controllers\PublicCafeController;
 use App\Http\Controllers\Staff\AuthController as StaffAuthController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
-
-
+use App\Http\Controllers\StaffShiftController;
+use App\Http\Controllers\TableCallController;
+use Illuminate\Support\Facades\Route;
 
 // Public Homepage & Cafe Directory
 Route::get('/', [PublicCafeController::class, 'index'])->name('welcome');
 
-// Individual Customized Cafe Storefront & Booking
+// Individual Customized Cafe Storefront, Booking & Table Waiter Calls
 Route::get('/cafes/{cafe:slug}', [PublicCafeController::class, 'show'])->name('cafes.show');
 Route::post('/cafes/{cafe:slug}/book', [BookingController::class, 'store'])->name('cafes.book');
+Route::post('/cafes/{cafe:slug}/call-waiter', [TableCallController::class, 'store'])->name('cafes.call-waiter');
 
 Route::get('/login', function () {
     return redirect()->route('welcome')->with('open_modal', 'login');
 })->name('login');
 
-Route::post('/login', [
-    AuthenticatedSessionController::class,
-    'store',
-])->name('login.store');
-
-Route::post('/logout', [
-    AuthenticatedSessionController::class,
-    'destroy',
-])->middleware('auth')->name('logout');
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::get('/register', function () {
     return redirect()->route('welcome')->with('open_modal', 'register');
 })->name('register');
 
-Route::post('/register', [
-    RegisteredUserController::class,
-    'store',
-])->name('register.store');
+Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
 
 Route::get('/about', function () {
     return view('about');
 })->name('about');
 
+// Owner Portal Routes
 Route::middleware('auth')
     ->prefix('owner')
     ->name('owner.')
     ->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/staff-records', [OwnerStaffRecordController::class, 'index'])->name('staff-records');
 
         Route::post('/cafes', [CafeController::class, 'store'])->name('cafes.store');
         Route::get('/cafes/{cafe}/edit', [CafeController::class, 'edit'])->name('cafes.edit');
@@ -85,17 +79,9 @@ Route::middleware('auth')
         Route::put('/cafes/{cafe}/staff/{staffMember}', [StaffController::class, 'update'])->name('staff.update');
         Route::patch('/cafes/{cafe}/staff/{staffMember}/toggle', [StaffController::class, 'toggleActive'])->name('staff.toggle');
         Route::delete('/cafes/{cafe}/staff/{staffMember}', [StaffController::class, 'destroy'])->name('staff.destroy');
-
-        // Cafe Staff Management (Owner)
-        Route::get('/cafes/{cafe}/staff', [StaffController::class, 'index'])->name('staff.index');
-        Route::post('/cafes/{cafe}/staff', [StaffController::class, 'store'])->name('staff.store');
-        Route::put('/cafes/{cafe}/staff/{staffMember}', [StaffController::class, 'update'])->name('staff.update');
-        Route::patch('/cafes/{cafe}/staff/{staffMember}/toggle', [StaffController::class, 'toggleActive'])->name('staff.toggle');
-        Route::delete('/cafes/{cafe}/staff/{staffMember}', [StaffController::class, 'destroy'])->name('staff.destroy');
-
     });
 
-    // Staff Portal Authentication & Operations
+// Staff Portal Authentication & Operations
 Route::prefix('staff')->name('staff.')->group(function () {
     Route::middleware('guest:staff')->group(function () {
         Route::get('/login', [StaffAuthController::class, 'showLogin'])->name('login');
@@ -106,6 +92,13 @@ Route::prefix('staff')->name('staff.')->group(function () {
         Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
         Route::patch('/bookings/{booking}/status', [StaffDashboardController::class, 'updateBookingStatus'])->name('bookings.status');
         Route::patch('/menu/{menuItem}/toggle', [StaffDashboardController::class, 'toggleMenuItem'])->name('menu.toggle');
+
+        // Shift Clock-In / Clock-Out & Live Waiter Calls
+        Route::post('/shift/clock-in', [StaffShiftController::class, 'clockIn'])->name('shift.clock-in');
+        Route::post('/shift/clock-out', [StaffShiftController::class, 'clockOut'])->name('shift.clock-out');
+        Route::get('/live-calls', [StaffShiftController::class, 'liveCalls'])->name('calls.live');
+        Route::patch('/calls/{tableCall}/resolve', [TableCallController::class, 'resolve'])->name('calls.resolve');
+
         Route::post('/logout', [StaffAuthController::class, 'logout'])->name('logout');
     });
 });

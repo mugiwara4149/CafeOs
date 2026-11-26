@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#09315a">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
 
     <title>@yield('title', 'CafeOS - Cafe Management Platform')</title>
@@ -45,41 +46,39 @@
             </div>
 
             <nav class="menu">
-                @if (request()->routeIs('staff.*') && Auth::guard('staff')->check())
-                    <a href="{{ route('staff.dashboard') }}" class="animated-text">Staff Portal</a>
-                    <form method="POST" action="{{ route('staff.logout') }}" class="d-inline m-0">
-                        @csrf
-                        <button type="submit" class="animated-text">
-                            Logout
-                        </button>
-                    </form>
-                @elseif (Auth::guard('web')->check())
-                    <a href="{{ route('owner.dashboard') }}" class="animated-text">Owner Dashboard</a>
-                    <form method="POST" action="{{ route('logout') }}" class="d-inline m-0">
-                        @csrf
-                        <button type="submit" class="animated-text">
-                            Logout
-                        </button>
-                    </form>
-                @elseif (Auth::guard('staff')->check())
-                    <a href="{{ route('staff.dashboard') }}" class="animated-text">Staff Portal</a>
-                    <form method="POST" action="{{ route('staff.logout') }}" class="d-inline m-0">
-                        @csrf
-                        <button type="submit" class="animated-text">
-                            Logout
-                        </button>
-                    </form>
-                @else
-                    <a href="{{ route('staff.login') }}" class="animated-text">Staff Login</a>
-                    <button type="button" class="animated-text login-trigger" data-bs-toggle="modal"
-                        data-bs-target="#loginModal">
-                        Owner Login
-                    </button>
-                @endif
-
-                <a class="animated-text" href="{{ route('about') }}">
-                    About
-                </a>
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    @if (Auth::guard('staff')->check())
+                        <a href="{{ route('staff.dashboard') }}" class="nav-link text-light fw-semibold">
+                            Staff Portal
+                        </a>
+                        <form method="POST" action="{{ route('staff.logout') }}" class="m-0">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-light">
+                                Staff Logout
+                            </button>
+                        </form>
+                    @elseif (Auth::check())
+                        <a href="{{ route('owner.dashboard') }}" class="nav-link text-light fw-semibold">
+                            Owner Dashboard
+                        </a>
+                        <a href="{{ route('owner.staff-records') }}" class="nav-link text-light">
+                            Staff Records
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}" class="m-0">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-light">
+                                Logout
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('staff.login') }}" class="nav-link text-light">
+                            Staff Login
+                        </a>
+                        <a href="{{ route('login') }}" class="hero-btn primary-btn py-1 px-3">
+                            Owner Login
+                        </a>
+                    @endif
+                </div>
             </nav>
 
 
